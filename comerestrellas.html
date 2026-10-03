@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Comer Estrellas ⭐</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: sans-serif; }
+        body { background: linear-gradient(135deg, #0f172a, #1e1b4b); min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 10px; }
+        
+        h1 { color: #fbbf24; font-size: 1.5rem; margin: 10px 0; }
+        .puntuacion { color: white; font-size: 1.2rem; margin-bottom: 10px; }
+        canvas { background: #020617; border: 3px solid #fbbf24; border-radius: 12px; max-width: 100%; box-shadow: 0 0 25px rgba(251,191,36,0.3); }
+        .controles { margin-top: 20px; display: flex; flex-direction: column; gap: 8px; }
+        .fila { display: flex; justify-content: center; gap: 8px; }
+        .btn { width: 65px; height: 65px; border-radius: 50%; border: none; background: linear-gradient(145deg, #6366f1, #4f46e5); color: white; font-size: 1.5rem; cursor: pointer; touch-action: manipulation; }
+        .btn:active { transform: scale(0.92); }
+        .mensaje { color: #94a3b8; margin-top: 15px; font-size: 0.9rem; text-align: center; }
+    </style>
+</head>
+<body>
+    <h1>⭐ Comer Estrellas ⭐</h1>
+    <div class="puntuacion">Puntos: <span id="puntos">0</span></div>
+    <canvas id="lienzo" width="400" height="400"></canvas>
+    
+    <div class="controles">
+        <div class="fila">
+            <button class="btn" id="btnArriba">↑</button>
+        </div>
+        <div class="fila">
+            <button class="btn" id="btnIzquierda">←</button>
+            <button class="btn" id="btnAbajo">↓</button>
+            <button class="btn" id="btnDerecha">→</button>
+        </div>
+    </div>
+    
+    <p class="mensaje">Toca los botones o usa las teclas de dirección</p>
+
+    <script>
+        const canvas = document.getElementById('lienzo');
+        const ctx = canvas.getContext('2d');
+        const tam = 20;
+        let serpiente = [{x: 10, y: 10}];
+        let direccion = {x: 1, y: 0};
+        let estrella = generarEstrella();
+        let puntos = 0;
+        let jugando = true;
+
+        function generarEstrella() {
+            return {
+                x: Math.floor(Math.random() * (canvas.width/tam)),
+                y: Math.floor(Math.random() * (canvas.height/tam))
+            };
+        }
+
+        function dibujar() {
+            // Fondo
+            ctx.fillStyle = '#020617';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Serpiente
+            serpiente.forEach((c, i) => {
+                ctx.fillStyle = i === 0 ? '#22c55e' : '#4ade80';
+                ctx.beginPath();
+                ctx.arc(c.x*tam+tam/2, c.y*tam+tam/2, tam/2-2, 0, Math.PI*2);
+                ctx.fill();
+            });
+
+            // Estrella
+            ctx.fillStyle = '#fbbf24';
+            ctx.font = '18px Arial';
+            ctx.fillText('⭐', estrella.x*tam+1, estrella.y*tam+16);
+        }
+
+        function avanzar() {
+            if (!jugando) return;
+
+            const cabeza = {
+                x: serpiente[0].x + direccion.x,
+                y: serpiente[0].y + direccion.y
+            };
+
+            // Paredes
+            if (cabeza.x < 0 || cabeza.x >= canvas.width/tam || 
+                cabeza.y < 0 || cabeza.y >= canvas.height/tam) {
+                return finJuego();
+            }
+
+            // A sí misma
+            if (serpiente.some(c => c.x === cabeza.x && c.y === cabeza.y)) {
+                return finJuego();
+            }
+
+            serpiente.unshift(cabeza);
+
+            // Comer estrella
+            if (cabeza.x === estrella.x && cabeza.y === estrella.y) {
+                puntos += 10;
+                document.getElementById('puntos').textContent = puntos;
+                estrella = generarEstrella();
+            } else {
+                serpiente.pop();
+            }
+
+            dibujar();
+        }
+
+        function finJuego() {
+            jugando = false;
+            alert(`¡Perdiste! Puntos: ${puntos}\nToca para volver a jugar`);
+            serpiente = [{x: 10, y: 10}];
+            direccion = {x: 1, y: 0};
+            puntos = 0;
+            document.getElementById('puntos').textContent = '0';
+            jugando = true;
+            estrella = generarEstrella();
+        }
+
+        // Controles teclado
+        document.addEventListener('keydown', e => {
+            if (e.key === 'ArrowUp' && direccion.y !== 1) direccion = {x:0, y:-1};
+            if (e.key === 'ArrowDown' && direccion.y !== -1) direccion = {x:0, y:1};
+            if (e.key === 'ArrowLeft' && direccion.x !== 1) direccion = {x:-1, y:0};
+            if (e.key === 'ArrowRight' && direccion.x !== -1) direccion = {x:1, y:0};
+        });
+
+        // Controles táctiles
+        document.getElementById('btnArriba').onclick = () => direccion.y !== 1 && (direccion = {x:0, y:-1});
+        document.getElementById('btnAbajo').onclick = () => direccion.y !== -1 && (direccion = {x:0, y:1});
+        document.getElementById('btnIzquierda').onclick = () => direccion.x !== 1 && (direccion = {x:-1, y:0});
+        document.getElementById('btnDerecha').onclick = () => direccion.x !== -1 && (direccion = {x:1, y:0});
+
+        setInterval(avanzar, 150);
+        dibujar();
+    </script>
+</body>
+</html>
